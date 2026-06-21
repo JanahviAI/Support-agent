@@ -40,7 +40,7 @@ class Ticket(Base):
     employee_id=Column(Integer, ForeignKey("employees.id"))
     issue_type=Column(String)
     description=Column(Text)
-    status=Column(String, default="opem")
+    status=Column(String, default="open")
     priority=Column(String, default="normal")
     created_at=Column(DateTime, default=lambda: datetime.now(timezone.utc))
     resolved_at= Column(DateTime, nullable=True)
