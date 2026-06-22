@@ -56,13 +56,13 @@ def reset_password(ticket_id: int, employee_id: int, system_name: str) -> dict:
     if not employee:
         db.close()
         return {"error": f"No employee found with id {ticket_id}"}
+    employee_name=employee.name
     
     ticket=db.query(Ticket).filter(Ticket.id==ticket_id).first()
     if not ticket:
         db.close()
         return {"error":f"No ticket found with id {ticket_id}"}
-    employee_name=employee.name
-    
+
     approval=PendingApproval(
         ticket_id=ticket_id,
         action_type="reset_password",
@@ -173,6 +173,44 @@ def grant_software_access(ticket_id: int, employee_id: int, system_name: str) ->
             "system": system_name
         }
 
+def escalate_to_human(ticket_id: int, employee_id: int, reason: str) -> dict:
+    """Handles anything the agent can't categorise, where there is no clear automated action to take."""
+    db=SessionLocal()
 
+    employee=db.query(Employee).filter(Employee.id==employee_id).first()
+    if not employee:
+        db.close()
+        return {"error": f"Employee having id {employee_id} doesn't exist."}
+    employee_name=employee.name
 
-    
+    ticket=db.query(Ticket).filter(Ticket.id==ticket_id).first()
+    if not ticket:
+        db.close()
+        return {"error":f"No ticket having id {ticket_id} exists."}
+       
+    approval=PendingApproval(
+        ticket_id=ticket_id,
+        action_type="escalate",
+        action_payload=json.dumps({
+            "employee_id":employee_id,
+            "employee_name":employee_name,
+            "reason": reason           
+        }),
+        agent_reasoning= reason,
+        status="pending"
+    )
+    db.add(approval)
+    ticket.status="escalated"
+    db.commit()
+    db.close()
+
+    return {
+        "result": "request escalated",
+        "message": "request sent for human review.",
+        "employee_id": employee_id,
+        "ticket_id": ticket_id
+    }
+
+if __name__ == "__main__":
+    print(escalate_to_human(4, 3, "Laptop running very slow, requires physical inspection by IT team"))
+    print(escalate_to_human(999, 3, "test"))  # should return error
