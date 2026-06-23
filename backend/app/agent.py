@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 from agent_tools import make_tools
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '..', '.env'), override=True)
 print("Key loaded:", os.getenv("ANTHROPIC_API_KEY")[:10] if os.getenv("ANTHROPIC_API_KEY") else "NOT FOUND")
 
 class AgentState(TypedDict):
