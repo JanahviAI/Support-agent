@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from agent_tools import make_tools
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '..', '.env'), override=True)
-print("Key loaded:", os.getenv("ANTHROPIC_API_KEY")[:10] if os.getenv("ANTHROPIC_API_KEY") else "NOT FOUND")
 
 class AgentState(TypedDict):
     messages: Annotated[list, operator.add]
@@ -85,13 +84,3 @@ def process_ticket(ticket_description: str, employee_id: int, ticket_id: int) ->
     final_message=result["messages"][-1]
     return final_message.content
         
-
-if __name__ == "__main__":
-    # Ticket 1: password reset (medium risk)
-    print("=== TEST 1: Password Reset ===")
-    result = process_ticket(
-        "I am locked out of my GitHub account and cannot push my code",
-        employee_id=1,
-        ticket_id=1
-    )
-    print(result)
