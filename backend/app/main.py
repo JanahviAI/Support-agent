@@ -68,7 +68,7 @@ def get_pending_approvals():
             "id":a.id,
             "ticket_id":a.ticket_id,
             "action_type":a.action_type,
-            "action_payload": a.action_payload,
+            "action_payload": json.loads(a.action_payload),
             "agent_reasoning": a.agent_reasoning,
             "status": a.status,
             "created_at": str(a.created_at)

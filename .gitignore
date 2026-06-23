@@ -25,13 +25,17 @@ htmlcov/
 # Logs
 *.log
 
-# Node / React
-frontend/node_modules/
-frontend/build/
-frontend/dist/
+# Next.js frontend
+frontend-next/node_modules/
+frontend-next/.next/
+frontend-next/build/
 
 # OS files
 .DS_Store
 Thumbs.db
 
+# Images and binaries
 image.png
+
+# Database
+*.db
