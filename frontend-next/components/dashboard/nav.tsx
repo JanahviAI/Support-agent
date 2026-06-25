@@ -1,7 +1,5 @@
 'use client'
-
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   TicketIcon,
@@ -9,32 +7,39 @@ import {
   MenuIcon,
   XIcon,
   LayoutDashboardIcon,
+  PlusCircleIcon,
 } from 'lucide-react'
 
-export function HelpdeskNav() {
+const API = 'http://localhost:8000'
+
+interface HelpdeskNavProps {
+  activeTab: string
+  onTabChange: (tab: string) => void
+}
+
+export function HelpdeskNav({ activeTab, onTabChange }: HelpdeskNavProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [backendOnline, setBackendOnline] = useState(false)
+
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const res = await fetch(`${API}/`)
+        setBackendOnline(res.ok)
+      } catch {
+        setBackendOnline(false)
+      }
+    }
+    checkBackend()
+    const interval = setInterval(checkBackend, 10000) // recheck every 10s
+    return () => clearInterval(interval)
+  }, [])
 
   const navItems = [
-    {
-      label: 'Dashboard',
-      href: '#',
-      icon: LayoutDashboardIcon,
-    },
-    {
-      label: 'Submit Ticket',
-      href: '#submit',
-      icon: TicketIcon,
-    },
-    {
-      label: 'All Tickets',
-      href: '#tickets',
-      icon: TicketIcon,
-    },
-    {
-      label: 'Approvals',
-      href: '#approvals',
-      icon: CheckCircleIcon,
-    },
+    { label: 'Dashboard', tab: 'submit', icon: LayoutDashboardIcon },
+    { label: 'Submit Ticket', tab: 'submit', icon: PlusCircleIcon },
+    { label: 'All Tickets', tab: 'tickets', icon: TicketIcon },
+    { label: 'Approvals', tab: 'approvals', icon: CheckCircleIcon },
   ]
 
   return (
@@ -68,13 +73,23 @@ export function HelpdeskNav() {
           <nav className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon
+              const isActive = activeTab === item.tab
               return (
-                <Link key={item.href} href={item.href}>
-                  <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground">
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </button>
-                </Link>
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    onTabChange(item.tab)
+                    setIsOpen(false)
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+                    ${isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-accent hover:text-accent-foreground'
+                    }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </button>
               )
             })}
           </nav>
@@ -83,12 +98,16 @@ export function HelpdeskNav() {
             <div className="space-y-2 text-sm">
               <p className="font-semibold">System Status</p>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-muted-foreground">AI Agent Online</span>
+                <div className={`h-2 w-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-muted-foreground">
+                  {backendOnline ? 'AI Agent Online' : 'Agent Offline'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-muted-foreground">Database Connected</span>
+                <div className={`h-2 w-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-muted-foreground">
+                  {backendOnline ? 'Database Connected' : 'Database Disconnected'}
+                </span>
               </div>
             </div>
           </div>

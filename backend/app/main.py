@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from models import SessionLocal, Ticket, PendingApproval, EmployeeAccess
+from models import SessionLocal, Ticket, PendingApproval, EmployeeAccess, Employee
 from agent import process_ticket
 import json
 
@@ -25,6 +25,31 @@ class ApprovalDesicion(BaseModel):
 @app.get("/")
 def root():
     return {"status": "IT Helpdesk Agent running"}
+
+@app.get("/employees")
+def get_employees():
+    db = SessionLocal()
+    employees = db.query(Employee).all()
+    result = [{"id": e.id, "name": e.name, "department": e.department, "role": e.role} for e in employees]
+    db.close()
+    return result
+
+@app.post("/tickets/create")
+def create_ticket(ticket: dict):
+    db = SessionLocal()
+    new_ticket = Ticket(
+        employee_id=ticket["employee_id"],
+        issue_type="general",
+        description=ticket["description"],
+        status="open",
+        priority="normal"
+    )
+    db.add(new_ticket)
+    db.commit()
+    db.refresh(new_ticket)
+    ticket_id = new_ticket.id
+    db.close()
+    return {"ticket_id": ticket_id}
 
 @app.post("/tickets/process")
 def process_ticket_endpoint(request: ProcessTicketRequest):

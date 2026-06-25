@@ -1,8 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { LoaderIcon } from 'lucide-react'
+
+const API = 'http://localhost:8000'
+
+interface Employee {
+  id: number
+  name: string
+  department: string
+  role: string
+}
 
 interface TicketFormProps {
   onSubmit: (data: {
@@ -13,124 +22,90 @@ interface TicketFormProps {
 }
 
 export default function TicketForm({ onSubmit }: TicketFormProps) {
-  const [formData, setFormData] = useState({
-    ticketId: '',
-    employeeId: '',
-    issueDescription: '',
-  })
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [selectedEmployee, setSelectedEmployee] = useState('')
+  const [issueDescription, setIssueDescription] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [error, setError] = useState('')
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.ticketId.trim()) {
-      newErrors.ticketId = 'Ticket ID is required'
-    }
-    if (!formData.employeeId.trim()) {
-      newErrors.employeeId = 'Employee ID is required'
-    }
-    if (!formData.issueDescription.trim()) {
-      newErrors.issueDescription = 'Issue description is required'
-    } else if (formData.issueDescription.length < 10) {
-      newErrors.issueDescription = 'Issue description must be at least 10 characters'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  useEffect(() => {
+    fetch(`${API}/employees`)
+      .then(r => r.json())
+      .then(setEmployees)
+      .catch(() => setError('Could not load employees'))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) {
+    if (!selectedEmployee || !issueDescription.trim()) {
+      setError('Please select an employee and describe the issue')
       return
     }
-
+    if (issueDescription.length < 10) {
+      setError('Issue description must be at least 10 characters')
+      return
+    }
+    setError('')
     setIsLoading(true)
     try {
-      await onSubmit(formData)
-      setFormData({ ticketId: '', employeeId: '', issueDescription: '' })
-      setErrors({})
+      // Auto-create ticket and get ID from backend
+      const res = await fetch(`${API}/tickets/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: parseInt(selectedEmployee),
+          description: issueDescription
+        })
+      })
+      const data = await res.json()
+      await onSubmit({
+        ticketId: String(data.ticket_id),
+        employeeId: selectedEmployee,
+        issueDescription
+      })
+      setSelectedEmployee('')
+      setIssueDescription('')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
     }
   }
 
   return (
     <div className="rounded-lg border border-border bg-card p-6">
       <h2 className="mb-6 text-xl font-semibold">Create New Support Ticket</h2>
-
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label htmlFor="ticketId" className="block text-sm font-medium">
-              Ticket ID
-            </label>
-            <input
-              id="ticketId"
-              name="ticketId"
-              type="text"
-              placeholder="e.g., TK-001"
-              value={formData.ticketId}
-              onChange={handleChange}
-              disabled={isLoading}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder-muted-foreground transition-colors focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            {errors.ticketId && <p className="text-xs text-destructive">{errors.ticketId}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="employeeId" className="block text-sm font-medium">
-              Employee ID
-            </label>
-            <input
-              id="employeeId"
-              name="employeeId"
-              type="text"
-              placeholder="e.g., EMP-2024"
-              value={formData.employeeId}
-              onChange={handleChange}
-              disabled={isLoading}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder-muted-foreground transition-colors focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            {errors.employeeId && <p className="text-xs text-destructive">{errors.employeeId}</p>}
-          </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Employee</label>
+          <select
+            value={selectedEmployee}
+            onChange={e => setSelectedEmployee(e.target.value)}
+            disabled={isLoading}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">Select an employee...</option>
+            {employees.map(emp => (
+              <option key={emp.id} value={emp.id}>
+                {emp.name} — {emp.role}, {emp.department}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="issueDescription" className="block text-sm font-medium">
-            Issue Description
-          </label>
+          <label className="block text-sm font-medium">Issue Description</label>
           <textarea
-            id="issueDescription"
-            name="issueDescription"
             placeholder="Describe the issue in detail..."
-            value={formData.issueDescription}
-            onChange={handleChange}
+            value={issueDescription}
+            onChange={e => setIssueDescription(e.target.value)}
             disabled={isLoading}
             rows={5}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder-muted-foreground transition-colors focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
-          {errors.issueDescription && (
-            <p className="text-xs text-destructive">{errors.issueDescription}</p>
-          )}
         </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full"
-        >
+        {error && <p className="text-xs text-destructive">{error}</p>}
+
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? (
             <>
               <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />

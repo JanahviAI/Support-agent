@@ -1,6 +1,15 @@
 'use client'
 
-import { Ticket } from '@/lib/mock-data'
+interface Ticket {
+  id: string
+  ticketId: string
+  employeeId: string
+  issueType: string
+  description: string
+  status: string
+  priority: string
+  createdAt: string
+}
 
 interface TicketsListProps {
   tickets: Ticket[]

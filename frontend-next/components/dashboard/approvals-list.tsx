@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Approval } from '@/lib/mock-data'
+interface Approval {
+  id: string
+  employeeName: string
+  actionType: string
+  agentReasoning: string
+  ticketId: string
+}
 import { CheckCircleIcon, XCircleIcon, LoaderIcon } from 'lucide-react'
 
 interface ApprovalsListProps {

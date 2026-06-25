@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/dashboard/layout'
 import TicketForm from '@/components/dashboard/ticket-form'
 import TicketsList from '@/components/dashboard/tickets-list'
 import ApprovalsList from '@/components/dashboard/approvals-list'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 
 const API = 'http://localhost:8000'
 
@@ -30,7 +30,7 @@ interface Approval {
 }
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<'submit' | 'tickets' | 'approvals'>('submit')
+  const [activeTab, setActiveTab] = useState<string>('submit')
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [approvals, setApprovals] = useState<Approval[]>([])
   const [agentResponse, setAgentResponse] = useState<string | null>(null)
@@ -112,7 +112,7 @@ export default function Page() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">IT Helpdesk Dashboard</h1>
@@ -120,20 +120,6 @@ export default function Page() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="submit">Submit Ticket</TabsTrigger>
-            <TabsTrigger value="tickets">
-              All Tickets {!loadingData && `(${tickets.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="approvals">
-              Pending Approvals
-              {approvals.length > 0 && (
-                <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-xs font-semibold text-white">
-                  {approvals.length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
 
           <TabsContent value="submit" className="space-y-4">
             <TicketForm onSubmit={handleTicketSubmit} />
