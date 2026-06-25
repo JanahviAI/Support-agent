@@ -58,6 +58,15 @@ class PendingApproval(Base):
     status=Column(String, default="pending")
     created_at= Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class User(Base):
+    __tablename__="users"
+
+    id= Column(Integer, primary_key=True)
+    email = Column(String, unique=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+
 DATABASE_URL= "sqlite:///./helpdesk.db"
 engine=create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal=sessionmaker(bind=engine)

@@ -1,4 +1,9 @@
 from models import init_db, SessionLocal, Employee, System, Ticket, EmployeeAccess
+from passlib.context import CryptContext
+from models import User
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def seed():
     init_db()
@@ -44,8 +49,44 @@ def seed():
     db.add_all(tickets)
     db.commit()
 
-    db.close()
+
+    users= [
+        User(
+                email="alisha@company.com",
+            hashed_password=pwd_context.hash("password123"),
+            role="employee",
+            employee_id=1
+        ),
+        User(
+            email="rohan@company.com",
+            hashed_password=pwd_context.hash("password123"),
+            role="employee",
+            employee_id=2
+        ),
+        User(
+            email="sara@company.com",
+            hashed_password=pwd_context.hash("password123"),
+            role="employee",
+            employee_id=3
+        ),
+        User(
+            email="dev@company.com",
+            hashed_password=pwd_context.hash("password123"),
+            role="employee",
+            employee_id=4
+        ),
+        User(
+            email="admin@company.com",
+            hashed_password=pwd_context.hash("admin123"),
+            role="admin",
+            employee_id=None
+        )
+    ]
+
+    db.add_all(users)
+    db.commit()
     print("Database seeded successfully.")
+    db.close()
 
 if __name__=="__main__":
     seed()
