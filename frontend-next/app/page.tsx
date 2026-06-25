@@ -156,7 +156,15 @@ export default function Page() {
             {agentResponse && (
               <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
                 <h3 className="mb-2 font-semibold text-green-900 dark:text-green-100">Agent Response</h3>
-                <p className="text-sm text-green-800 dark:text-green-200 whitespace-pre-wrap">{agentResponse}</p>
+                <div
+                  className="text-sm text-green-800 dark:text-green-200 whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: agentResponse
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                      .replace(/\n/g, '<br/>')
+                  }}
+                />
               </div>
             )}
           </TabsContent>
