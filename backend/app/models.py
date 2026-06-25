@@ -67,9 +67,9 @@ class User(Base):
     role = Column(String, nullable=False)
     employee_id = Column(Integer, ForeignKey("employees.id"))
 
-DATABASE_URL= "sqlite:///./helpdesk.db"
-engine=create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal=sessionmaker(bind=engine)
+DATABASE_URL = "sqlite:///./helpdesk.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
