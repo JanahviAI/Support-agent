@@ -9,7 +9,6 @@ import { Tabs, TabsContent } from '@/components/ui/tabs'
 
 const API = 'http://localhost:8000'
 
-// Match the shape V0's components expect
 interface Ticket {
   id: string
   ticketId: string
@@ -36,16 +35,31 @@ export default function Page() {
   const [agentResponse, setAgentResponse] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
 
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      window.location.replace('/login')
+    }
+  }, [])
+  
   const fetchData = async () => {
-    try {
-      const [ticketsRes, approvalsRes] = await Promise.all([
-        fetch(`${API}/tickets`),
-        fetch(`${API}/approvals/pending`)
-      ])
-      const ticketsData = await ticketsRes.json()
-      const approvalsData = await approvalsRes.json()
+    const token = localStorage.getItem('token')
+    const role = localStorage.getItem('role')
 
-      // Map backend shape to what V0 components expect
+    if (!token) return
+
+    try {
+      const headers = { 'Authorization': `Bearer ${token}` }
+
+      const ticketsRes = await fetch(`${API}/tickets`, { headers })
+
+      const approvalsRes = role === 'admin'
+        ? await fetch(`${API}/approvals/pending`, { headers })
+        : null
+
+      const ticketsData = await ticketsRes.json()
+      const approvalsData = approvalsRes ? await approvalsRes.json() : []
+
       setTickets(ticketsData.map((t: any) => ({
         id: `#${t.id}`,
         ticketId: String(t.id),
@@ -57,13 +71,18 @@ export default function Page() {
         createdAt: t.created_at,
       })))
 
-      setApprovals(approvalsData.map((a: any) => ({
-        id: String(a.id),
-        employeeName: a.action_payload?.employee_name || 'Unknown',
-        actionType: a.action_type.replace('_', ' '),
-        agentReasoning: a.agent_reasoning,
-        ticketId: String(a.ticket_id),
-      })))
+      setApprovals(approvalsData.map((a: any) => {
+        const payload = typeof a.action_payload === 'string'
+          ? JSON.parse(a.action_payload)
+          : a.action_payload
+        return {
+          id: String(a.id),
+          employeeName: payload?.employee_name || `Employee ${payload?.employee_id}`,
+          actionType: a.action_type.replace('_', ' '),
+          agentReasoning: a.agent_reasoning,
+          ticketId: String(a.ticket_id),
+        }
+      }))
     } catch (e) {
       console.error('Failed to fetch data:', e)
     } finally {
@@ -78,10 +97,14 @@ export default function Page() {
     employeeId: string
     issueDescription: string
   }) => {
+    const token = localStorage.getItem('token')
     setAgentResponse(null)
     const res = await fetch(`${API}/tickets/process`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         ticket_id: parseInt(formData.ticketId),
         employee_id: parseInt(formData.employeeId),
@@ -90,22 +113,30 @@ export default function Page() {
     })
     const data = await res.json()
     setAgentResponse(data.response)
-    fetchData() // refresh tickets and approvals
+    fetchData()
   }
 
   const handleApprove = async (id: string) => {
+    const token = localStorage.getItem('token')
     await fetch(`${API}/approvals/${id}/decide`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ decision: 'approved' })
     })
     fetchData()
   }
 
   const handleReject = async (id: string) => {
+    const token = localStorage.getItem('token')
     await fetch(`${API}/approvals/${id}/decide`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ decision: 'rejected' })
     })
     fetchData()
@@ -119,8 +150,7 @@ export default function Page() {
           <p className="text-muted-foreground">Manage support tickets and approvals</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
           <TabsContent value="submit" className="space-y-4">
             <TicketForm onSubmit={handleTicketSubmit} />
             {agentResponse && (

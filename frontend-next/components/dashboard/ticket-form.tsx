@@ -27,11 +27,25 @@ export default function TicketForm({ onSubmit }: TicketFormProps) {
   const [issueDescription, setIssueDescription] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [role, setRole] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch(`${API}/employees`)
+    const token = localStorage.getItem('token')
+    const userRole = localStorage.getItem('role')
+    const employeeId = localStorage.getItem('employee_id')
+
+    setRole(userRole)
+
+    fetch(`${API}/employees`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(r => r.json())
-      .then(setEmployees)
+      .then((data) => {
+        setEmployees(data)
+        if (userRole === 'employee' && employeeId) {
+          setSelectedEmployee(employeeId)
+        }
+      })
       .catch(() => setError('Could not load employees'))
   }, [])
 
@@ -48,10 +62,13 @@ export default function TicketForm({ onSubmit }: TicketFormProps) {
     setError('')
     setIsLoading(true)
     try {
-      // Auto-create ticket and get ID from backend
+      const token = localStorage.getItem('token')
       const res = await fetch(`${API}/tickets/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           employee_id: parseInt(selectedEmployee),
           description: issueDescription
@@ -63,8 +80,8 @@ export default function TicketForm({ onSubmit }: TicketFormProps) {
         employeeId: selectedEmployee,
         issueDescription
       })
-      setSelectedEmployee('')
       setIssueDescription('')
+      if (role === 'admin') setSelectedEmployee('')
     } finally {
       setIsLoading(false)
     }
@@ -76,19 +93,28 @@ export default function TicketForm({ onSubmit }: TicketFormProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label className="block text-sm font-medium">Employee</label>
-          <select
-            value={selectedEmployee}
-            onChange={e => setSelectedEmployee(e.target.value)}
-            disabled={isLoading}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="">Select an employee...</option>
-            {employees.map(emp => (
-              <option key={emp.id} value={emp.id}>
-                {emp.name} — {emp.role}, {emp.department}
-              </option>
-            ))}
-          </select>
+          {role === 'admin' ? (
+            <select
+              value={selectedEmployee}
+              onChange={e => setSelectedEmployee(e.target.value)}
+              disabled={isLoading}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select an employee...</option>
+              {employees.map(emp => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name} — {emp.role}, {emp.department}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              disabled
+              value={employees.find(e => String(e.id) === selectedEmployee)?.name || 'Loading...'}
+              className="w-full rounded-md border border-input bg-muted px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-70"
+            />
+          )}
         </div>
 
         <div className="space-y-2">

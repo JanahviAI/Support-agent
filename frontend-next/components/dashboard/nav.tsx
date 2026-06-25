@@ -8,6 +8,7 @@ import {
   XIcon,
   LayoutDashboardIcon,
   PlusCircleIcon,
+  LogOutIcon,
 } from 'lucide-react'
 
 const API = 'http://localhost:8000'
@@ -20,8 +21,13 @@ interface HelpdeskNavProps {
 export function HelpdeskNav({ activeTab, onTabChange }: HelpdeskNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [backendOnline, setBackendOnline] = useState(false)
+  const [role, setRole] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(null)
 
   useEffect(() => {
+    setRole(localStorage.getItem('role'))
+    setEmail(localStorage.getItem('email'))
+
     const checkBackend = async () => {
       try {
         const res = await fetch(`${API}/`)
@@ -31,15 +37,23 @@ export function HelpdeskNav({ activeTab, onTabChange }: HelpdeskNavProps) {
       }
     }
     checkBackend()
-    const interval = setInterval(checkBackend, 10000) // recheck every 10s
+    const interval = setInterval(checkBackend, 10000)
     return () => clearInterval(interval)
   }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('role')
+    localStorage.removeItem('employee_id')
+    localStorage.removeItem('email')
+    window.location.href = '/login'
+  }
 
   const navItems = [
     { label: 'Dashboard', tab: 'submit', icon: LayoutDashboardIcon },
     { label: 'Submit Ticket', tab: 'submit', icon: PlusCircleIcon },
     { label: 'All Tickets', tab: 'tickets', icon: TicketIcon },
-    { label: 'Approvals', tab: 'approvals', icon: CheckCircleIcon },
+    ...(role === 'admin' ? [{ label: 'Approvals', tab: 'approvals', icon: CheckCircleIcon }] : []),
   ]
 
   return (
@@ -64,11 +78,19 @@ export function HelpdeskNav({ activeTab, onTabChange }: HelpdeskNavProps) {
         } fixed left-0 top-0 z-40 h-full w-64 border-r border-border bg-card md:sticky md:block md:top-0`}
         style={{ paddingTop: isOpen ? '60px' : '0' }}
       >
-        <div className="space-y-4 p-4">
+        <div className="flex h-full flex-col p-4">
           <div className="hidden py-4 md:block">
             <h1 className="text-xl font-bold">IT Helpdesk</h1>
             <p className="text-sm text-muted-foreground">AI Agent Dashboard</p>
           </div>
+
+          {/* User info */}
+          {email && (
+            <div className="mb-4 rounded-lg bg-muted px-3 py-2">
+              <p className="text-xs font-medium truncate">{email}</p>
+              <p className="text-xs text-muted-foreground capitalize">{role}</p>
+            </div>
+          )}
 
           <nav className="space-y-2">
             {navItems.map((item) => {
@@ -94,21 +116,35 @@ export function HelpdeskNav({ activeTab, onTabChange }: HelpdeskNavProps) {
             })}
           </nav>
 
-          <div className="border-t border-border pt-4">
-            <div className="space-y-2 text-sm">
-              <p className="font-semibold">System Status</p>
-              <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className="text-muted-foreground">
-                  {backendOnline ? 'AI Agent Online' : 'Agent Offline'}
-                </span>
+          {/* Push everything below to bottom */}
+          <div className="mt-auto space-y-4">
+            <div className="border-t border-border pt-4">
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold">System Status</p>
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className="text-muted-foreground">
+                    {backendOnline ? 'AI Agent Online' : 'Agent Offline'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className="text-muted-foreground">
+                    {backendOnline ? 'Database Connected' : 'Database Disconnected'}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className="text-muted-foreground">
-                  {backendOnline ? 'Database Connected' : 'Database Disconnected'}
-                </span>
-              </div>
+            </div>
+
+            {/* Sign out button */}
+            <div className="border-t border-border pt-4">
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-accent"
+              >
+                <LogOutIcon className="h-4 w-4" />
+                <span>Sign out</span>
+              </button>
             </div>
           </div>
         </div>
