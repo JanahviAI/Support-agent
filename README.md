@@ -17,7 +17,7 @@ This project solves that. The agent handles what it can automatically, queues wh
 ![Employee Dashboard](screenshots/employee-dashboard.png)
 
 ### My Tickets
-![Employee Tickets](screenshots/employee-tickets.png)
+![Employee Tickets](screenshots/employee-ticket.png)
 
 ### Admin Approvals
 ![Admin Approvals](screenshots/admin-approvals.png)
