@@ -39,15 +39,7 @@ def seed():
     ]
     db.add_all(accesses)
     db.commit()
-    
-    tickets=[
-        Ticket(employee_id=1, issue_type="password_reset", description="Locked out of my GitHub account, can't push code", priority="high"),
-        Ticket(employee_id=2, issue_type="access_request", description="Need access to Figma to review design mockups", priority="normal"),
-        Ticket(employee_id=4, issue_type="access_request", description="Requesting AWS Console access for deployment tasks", priority="normal"),
-        Ticket(employee_id=3, issue_type="other", description="Laptop running very slow, affects daily work", priority="low")
-    ]
-    db.add_all(tickets)
-    db.commit()
+
 
 
     users= [

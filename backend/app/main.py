@@ -112,6 +112,7 @@ def create_ticket(ticket: dict, current_user: dict = Depends(get_current_user)):
     db.refresh(new_ticket)
     ticket_id = new_ticket.id
     db.close()
+
     return {"ticket_id": ticket_id}
 
 @app.post("/tickets/process")
@@ -124,9 +125,16 @@ def process_ticket_endpoint(request: ProcessTicketRequest, current_user: dict = 
             employee_id=request.employee_id,
             ticket_id=request.ticket_id
         )
+        # If ticket is still open after agent processed it, mark as resolved
+        db = SessionLocal()
+        ticket = db.query(Ticket).filter(Ticket.id == request.ticket_id).first()
+        if ticket and ticket.status == "open":
+            ticket.status = "resolved"
+            db.commit()
+        db.close()
         return {"success": True, "response": result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))    
 
 @app.get("/tickets")
 def get_tickets(current_user: dict = Depends(get_current_user)):

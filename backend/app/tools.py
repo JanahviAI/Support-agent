@@ -203,6 +203,7 @@ def escalate_to_human(ticket_id: int, employee_id: int, reason: str) -> dict:
     ticket.status="escalated"
     db.commit()
     db.close()
+    print(f"Escalating ticket {ticket_id}, found ticket: {ticket}")
 
     return {
         "result": "request escalated",
